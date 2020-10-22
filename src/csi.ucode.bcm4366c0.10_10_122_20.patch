@@ -117,7 +117,7 @@
 > 	mov 0, [0x87f]
 > 	mov	0xdead, [0x880]
 > 	mov	0x86E, SPARE1
-4243a4358,4453
+4243a4358,4463
 > 	xje	DUMP_CSI, 0, dont_dump_csi
 > 	mov	[0x870], PHYSTATUS0
 > 	mov	[0x879], RXCHAN
@@ -142,12 +142,22 @@
 > 	mov	0, SPARE4		// core 0..3
 > loop_core:
 > 	mov	ACPHY_TBL_ID_CORE0CHANESTTBL, SPARE5
+> 	mov	0xff00, SPARE6
+> 	and	[0x872], SPARE6, SPARE6
+> 	sr	SPARE6, 8, [SHM(0x164e)]
 > 	xje	SPARE4, 0, table_set+
 > 	mov	ACPHY_TBL_ID_CORE1CHANESTTBL, SPARE5
+> 	mov	0x00ff, SPARE6
+> 	and	[0x873], SPARE6, [SHM(0x164e)]
 > 	xje	SPARE4, 1, table_set+
 > 	mov	ACPHY_TBL_ID_CORE2CHANESTTBL, SPARE5
+> 	mov	0xff00, SPARE6
+> 	and	[0x873], SPARE6, SPARE6
+> 	sr	SPARE6, 8, [SHM(0x164e)]
 > 	xje	SPARE4, 2, table_set+
 > 	mov	ACPHY_TBL_ID_CORE3CHANESTTBL, SPARE5
+> 	mov	0x00ff, SPARE6
+> 	and	[0x874], SPARE6, [SHM(0x164e)]
 > table_set:
 > 	mov	0, SPARE6		// NSSRX 0..3
 > loop_nss:
@@ -214,13 +224,13 @@
 > 	calls disable_carrier_search
 > 	mov 0, CLEANDEAF
 > dont_dump_csi:
-5150,5151c5360,5361
+5150,5151c5370,5371
 < 	mov	0x86E, SPR_RXE_RXHDR_OFFSET
 < 	mov	0x12, SPR_RXE_RXHDR_LEN
 ---
 > 	mov	SPARE1, SPR_RXE_RXHDR_OFFSET
 > 	mov	RXE_RXHDR_LEN, SPR_RXE_RXHDR_LEN
-6625c6835,6933
+6625c6845,6943
 < 	@0	@0, @0, @0
 \ No newline at end of file
 ---

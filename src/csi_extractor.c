@@ -80,6 +80,7 @@ struct d11csihdr {
     uint8  src[6];
     uint16 seqcnt;
     uint16 chanspec;
+    uint16 rxpwr;
 #else
     uint16 RxFrameSize;                 /* 0x000 Set to 0x2 for CSI frames */
     uint16 NexmonExt;                   /* 0x002 */
@@ -134,7 +135,8 @@ struct wlc_d11rxhdr {
 
 struct csi_udp_frame {
     struct ethernet_ip_udp_header hdrs;
-    uint32 kk1;
+    uint16 kk1;
+    int16 rxpwr;
     uint8 SrcMac[6];
     uint16 seqCnt;
     uint16 csiconf;
@@ -150,7 +152,7 @@ uint16 inserted_csi_values = 0;
 struct sk_buff *p_csi = 0;
 
 void
-create_new_csi_frame(struct wl_info *wl, uint16 csiconf, int length)
+create_new_csi_frame(struct wl_info *wl, uint16 csiconf, int length, int16 rxpwr)
 {
     struct osl_info *osh = wl->wlc->osh;
     // create new csi udp frame
@@ -158,7 +160,10 @@ create_new_csi_frame(struct wl_info *wl, uint16 csiconf, int length)
     // fill header
     struct csi_udp_frame *udpfrm = (struct csi_udp_frame *) p_csi->data;
     // add magic bytes, csi config and chanspec to new udp frame
-    udpfrm->kk1 = 0x11111111;
+    udpfrm->kk1 = 0x1111;
+    if (rxpwr > 127)
+        rxpwr -= 256;
+    udpfrm->rxpwr = rxpwr;
     udpfrm->seqCnt = 0;
     udpfrm->csiconf = csiconf;
     udpfrm->chanspec = get_chanspec(wl->wlc);
@@ -194,7 +199,7 @@ process_frame_hook(struct sk_buff *p, struct wlc_d11rxhdr *wlc_rxhdr, struct wlc
                 printf("unexpected new csi, clearing old\n");
                 pkt_buf_free_skb(osh, p_csi, 0);
             }
-            create_new_csi_frame(wl, csiconf, missing * CSIDATA_PER_CHUNK);
+            create_new_csi_frame(wl, csiconf, missing * CSIDATA_PER_CHUNK, (int16)((int8)(ucodecsifrm->rxpwr)));
             missing_csi_frames = missing;
             inserted_csi_values = 0;
         }
